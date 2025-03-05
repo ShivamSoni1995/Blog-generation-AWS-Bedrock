@@ -1,0 +1,180 @@
+Here’s a detailed breakdown of your AWS Lambda function code:
+
+---
+
+   Imports 
+
+ python
+import boto3
+import botocore.config
+import json
+from datetime import datetime
+ 
+
+-  boto3 : AWS SDK for Python, used to interact with AWS services.
+-  botocore.config : Provides configuration options for AWS clients (e.g., timeout, retries).
+-  json : Handles JSON data (parsing and serialization).
+-  datetime : To fetch and format the current timestamp.
+
+---
+
+   Function: `blog_generate_using_bedrock` 
+
+ python
+def blog_generate_using_bedrock(blogtopic: str) -> str:
+    prompt = f"""<s>[INST]Human: Write a 200 words blog on the topic {blogtopic}
+    Assistant:[/INST]
+    """
+ 
+
+1.  Purpose : Generates a blog using AWS Bedrock’s `meta.llama2-13b-chat-v1` model.
+2.  Input : Takes `blogtopic` as a string to specify the blog topic.
+3.  Prompt : Defines the input prompt for the model. 
+   - `<s>` and `[/INST]` delimiters are specific to the model's input structure.
+   - The `prompt` instructs the AI to generate a 200-word blog on the provided topic.
+
+ python
+    body = {
+        "prompt": prompt,
+        "max_gen_len": 512,
+        "temperature": 0.5,
+        "top_p": 0.9
+    }
+ 
+
+4.  Body : A dictionary containing parameters for text generation.
+   -  max_gen_len : Maximum length of the generated output.
+   -  temperature : Controls randomness in the output (lower values = more deterministic).
+   -  top_p : Filters tokens for sampling, balancing creativity and coherence.
+
+ python
+    try:
+        bedrock = boto3.client("bedrock-runtime", region_name="us-east-1",
+                               config=botocore.config.Config(read_timeout=300, retries={'max_attempts': 3}))
+ 
+
+5.  Create a Bedrock client : 
+   - Connects to AWS Bedrock in the `us-east-1` region.
+   - Sets a `read_timeout` of 300 seconds and a retry policy for robustness.
+
+ python
+        response = bedrock.invoke_model(body=json.dumps(body), modelId="meta.llama2-13b-chat-v1")
+ 
+
+6.  Invoke Bedrock Model :
+   - Calls the model `meta.llama2-13b-chat-v1` with the defined parameters.
+
+ python
+        response_content = response.get('body').read()
+        response_data = json.loads(response_content)
+ 
+
+7.  Process Response :
+   - Reads and decodes the response body.
+   - Parses the JSON response to extract the generated blog.
+
+ python
+        blog_details = response_data['generation']
+        return blog_details
+ 
+
+8.  Return Blog : Extracts the text from the response and returns it.
+
+ python
+    except Exception as e:
+        print(f"Error generating the blog: {e}")
+        return ""
+ 
+
+9.  Error Handling : Logs errors during model invocation and returns an empty string.
+
+---
+
+   Function: `save_blog_details_s3` 
+
+ python
+def save_blog_details_s3(s3_key, s3_bucket, generate_blog):
+    s3 = boto3.client('s3')
+ 
+
+1.  Purpose : Saves the generated blog to an S3 bucket.
+2.  Inputs :
+   - `s3_key`: The object’s key (file path) in S3.
+   - `s3_bucket`: Name of the target S3 bucket.
+   - `generate_blog`: The generated blog text.
+
+ python
+    try:
+        s3.put_object(Bucket=s3_bucket, Key=s3_key, Body=generate_blog)
+        print("Code saved to S3")
+ 
+
+3.  Upload Blog :
+   - Calls `put_object` to save the blog in the specified S3 bucket.
+   - Uses `Key` as the file name and `Body` as the content.
+
+ python
+    except Exception as e:
+        print("Error when saving the code to S3")
+ 
+
+4.  Error Handling : Logs any errors during S3 operations.
+
+---
+
+   Function: `lambda_handler` 
+
+ python
+def lambda_handler(event, context):
+    event = json.loads(event['body'])
+    blogtopic = event['blog_topic']
+ 
+
+1.  Purpose : Entry point for the Lambda function. Coordinates the blog generation and storage.
+2.  Inputs :
+   - `event`: Contains the input data (e.g., blog topic) passed to Lambda.
+   - `context`: Metadata about the Lambda invocation (not used here).
+3.  Parsing Event :
+   - Extracts `blog_topic` from the event’s JSON body.
+
+ python
+    generate_blog = blog_generate_using_bedrock(blogtopic=blogtopic)
+ 
+
+4.  Generate Blog : Calls `blog_generate_using_bedrock` to create the blog.
+
+ python
+    if generate_blog:
+        current_time = datetime.now().strftime('%H%M%S')
+        s3_key = f"blog-output/{current_time}.txt"
+        s3_bucket = 'aws_bedrock_course1'
+        save_blog_details_s3(s3_key, s3_bucket, generate_blog)
+ 
+
+5.  Save Blog :
+   - Generates a unique file name using the current time.
+   - Saves the blog to the S3 bucket `aws_bedrock_course1`.
+
+ python
+    else:
+        print("No blog was generated")
+ 
+
+6.  Handle Empty Blog : Logs a message if no blog is generated.
+
+ python
+    return {
+        'statusCode': 200,
+        'body': json.dumps('Blog Generation is completed')
+    }
+ 
+
+7.  Response :
+   - Returns a 200 HTTP status code with a success message.
+
+---
+
+   Summary 
+- The script integrates AWS Bedrock to generate content dynamically based on a topic.
+- The blog is stored securely in an S3 bucket for later access.
+- Error handling ensures the process is robust against failures.
