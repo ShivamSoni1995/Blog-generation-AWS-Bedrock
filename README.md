@@ -27,8 +27,7 @@ This README provides a guide to understanding the architecture, services used, a
     * [Error Handling](#error-handling)
     * [Permissions](#permissions)
 7.  [Testing the Application](#testing-the-application)
-8.  [Logging and Debugging](#logging-and-debugging)
-9.  [Future Enhancements](#future-enhancements)
+
 
 ## Architecture
 
