@@ -135,7 +135,7 @@ The application follows this high-level architecture:
 * Python 3.12
 
 ### Core Logic
-
+[App.py](https://github.com/ShivamSoni1995/Blog-generation-AWS-Bedrock/blob/main/app.py)
 ### Error Handling
 
 A try-catch (try-except in Python) block is implemented in the Lambda function to handle potential errors during model invocation or S3 operations.
