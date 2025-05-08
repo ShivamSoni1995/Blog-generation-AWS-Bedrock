@@ -138,23 +138,23 @@ The application follows this high-level architecture:
 
 Error Handling
 
-    A try-catch (try-except in Python) block is implemented in the Lambda function to handle potential errors during model invocation or S3 operations.
-    Errors are logged to CloudWatch.
+A try-catch (try-except in Python) block is implemented in the Lambda function to handle potential errors during model invocation or S3 operations.
+Errors are logged to CloudWatch.
 
 Permissions
 
 The Lambda execution role requires permissions to:
 
-    Invoke Amazon Bedrock models (e.g., bedrock:InvokeModel).
-    Write objects to the designated S3 bucket (e.g., s3:PutObject).
-    Write logs to CloudWatch Logs (usually granted by default).
+Invoke Amazon Bedrock models (e.g., bedrock:InvokeModel).
+Write objects to the designated S3 bucket (e.g., s3:PutObject).
+Write logs to CloudWatch Logs (usually granted by default).
 
 Testing the Application
 
-    Obtain the Invoke URL from your deployed API Gateway stage.
-    Use Postman (or a similar API client) to send a POST request to the Invoke URL (e.g., https://<api-id>.execute-api.<region>.amazonaws.com/<stage>/blog).
-    Set the request body to JSON, providing the query:
-    JSON
+Obtain the Invoke URL from your deployed API Gateway stage.
+Use Postman (or a similar API client) to send a POST request to the Invoke URL (e.g., https://<api-id>.execute-api.<region>.amazonaws.com/<stage>/blog).
+Set the request body to JSON, providing the query:
+JSON
 
 {
     "query": "Write a short blog post about the future of serverless computing.",
